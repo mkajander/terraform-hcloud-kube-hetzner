@@ -861,14 +861,6 @@ cloudinit_write_files_common = <<EOT
     ip link set $INTERFACE down
     ip link set $INTERFACE name eth1
     ip link set eth1 up
-    
-    # In case of a private-only network, eth0 may not exist
-    if ip link show eth0 &>/dev/null; then
-        eth0_connection=$(nmcli -g GENERAL.CONNECTION device show eth0)
-        nmcli connection modify "$eth0_connection" \
-          con-name eth0 \
-          connection.interface-name eth0
-    fi
 
     myrepeat () {
         # Current time + 300 seconds (5 minutes)
@@ -899,7 +891,13 @@ cloudinit_write_files_common = <<EOT
           connection.interface-name "$eth"
     }
 
-    myrepeat myrename eth0
+    # In case of a private-only network, eth0 may not exist
+    if ip link show eth0 &>/dev/null; then
+        eth0_connection=$(nmcli -g GENERAL.CONNECTION device show eth0)
+        nmcli connection modify "$eth0_connection" \
+          con-name eth0 \
+          connection.interface-name eth0
+    fi
     myrepeat myrename eth1
 
     systemctl restart NetworkManager
